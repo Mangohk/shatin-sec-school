@@ -1,4 +1,4 @@
-[
+window.SHATIN_SCHOOLS = [
   {
     "id": "st-01",
     "nameZh": "五旬節林漢光中學",
@@ -855,4 +855,4 @@
     "initials": "若瑟",
     "logoDomain": "mossjss.edu.hk"
   }
-]
+];

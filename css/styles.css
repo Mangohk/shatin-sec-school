@@ -182,6 +182,75 @@ main {
   background: #fff;
 }
 
+.filter-row {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 0.5rem 0.75rem;
+}
+
+.filter-label {
+  flex: 0 0 auto;
+  min-width: 2.5rem;
+  font-size: 0.85rem;
+  font-weight: 700;
+  color: var(--ink-soft);
+}
+
+.band-filters {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 0.45rem;
+}
+
+.school-card-title-row {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 0.65rem;
+}
+
+.school-card-title-row .school-name {
+  flex: 1;
+  min-width: 0;
+}
+
+.band-pill {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 4.4rem;
+  padding: 0.28rem 0.55rem;
+  border-radius: 10px;
+  font-size: 0.78rem;
+  font-weight: 800;
+  letter-spacing: 0.02em;
+  line-height: 1.2;
+  background: var(--paper-2);
+  color: var(--ink-soft);
+}
+
+.band-pill.band-1 {
+  background: #1f5b43;
+  color: #f3fff8;
+}
+
+.band-pill.band-2 {
+  background: #8a5a12;
+  color: #fff8ea;
+}
+
+.band-pill.band-3 {
+  background: #4a5560;
+  color: #f4f6f8;
+}
+
+.band-pill.band-未知 {
+  background: #d9d3c6;
+  color: #4a453c;
+}
+
 .filters {
   display: flex;
   flex-wrap: wrap;
@@ -603,6 +672,64 @@ main {
 .school-marker {
   background: transparent;
   border: 0;
+}
+
+.marker-badge {
+  position: relative;
+  width: 34px;
+  height: 34px;
+  border-radius: 50%;
+  border: 2px solid #fff;
+  box-shadow: 0 3px 10px rgba(20, 35, 31, 0.28);
+  display: grid;
+  place-items: center;
+  overflow: hidden;
+  background: var(--teal);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 800;
+  letter-spacing: -0.02em;
+  line-height: 1;
+  font-family: var(--font-sans);
+}
+
+.marker-badge.band-1 { background: #0f6b5c; }
+.marker-badge.band-2 { background: #b06d1c; }
+.marker-badge.band-3 { background: #4d5a66; }
+.marker-badge.band-未知 { background: #6b655b; }
+
+.marker-badge.is-nearest {
+  box-shadow: 0 0 0 3px rgba(196, 122, 44, 0.55), 0 4px 14px rgba(20, 35, 31, 0.35);
+  transform: scale(1.08);
+}
+
+.marker-badge img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+  background: #fff;
+}
+
+.marker-badge .marker-initials {
+  padding: 0 2px;
+  text-align: center;
+}
+
+.leaflet-tooltip.school-tooltip {
+  background: rgba(20, 35, 31, 0.92);
+  color: #f7f2e8;
+  border: 0;
+  border-radius: 8px;
+  padding: 0.35rem 0.55rem;
+  font-family: var(--font-sans);
+  font-size: 0.82rem;
+  font-weight: 700;
+  box-shadow: 0 8px 18px rgba(0, 0, 0, 0.2);
+}
+
+.leaflet-tooltip.school-tooltip::before {
+  border-top-color: rgba(20, 35, 31, 0.92);
 }
 
 .marker-dot {

@@ -34,12 +34,25 @@
           <span class="sr-only">搜尋學校</span>
           <input id="search" type="search" placeholder="搜尋校名、地址、類型…" autocomplete="off" />
         </label>
-        <div class="filters" role="group" aria-label="學校類型篩選">
-          <button class="chip is-active" data-type="all">全部</button>
-          <button class="chip" data-type="官立">官立</button>
-          <button class="chip" data-type="資助">資助</button>
-          <button class="chip" data-type="直資">直資</button>
-          <button class="chip" data-type="私立">私立</button>
+        <div class="filter-row">
+          <span class="filter-label">類型</span>
+          <div class="filters" role="group" aria-label="學校類型篩選">
+            <button class="chip is-active" data-type="all">全部</button>
+            <button class="chip" data-type="官立">官立</button>
+            <button class="chip" data-type="資助">資助</button>
+            <button class="chip" data-type="直資">直資</button>
+            <button class="chip" data-type="私立">私立</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">組別</span>
+          <div class="band-filters" role="group" aria-label="民間參考組別篩選">
+            <button class="chip is-active" data-band="all">全部</button>
+            <button class="chip" data-band="1">Band 1</button>
+            <button class="chip" data-band="2">Band 2</button>
+            <button class="chip" data-band="3">Band 3</button>
+            <button class="chip" data-band="未知">未知／不適用</button>
+          </div>
         </div>
         <p class="result-count" id="result-count"></p>
       </div>
@@ -70,12 +83,10 @@
       </div>
       <div id="events-list" class="events-list"></div>
       <aside class="sources">
-        <h2>Notion 同步說明</h2>
+        <h2>升中項目說明</h2>
         <ul>
-          <li>內容來自 Notion 資料庫「沙田升中事件清單」（升中相關項目），經 MCP 匯出為本機快照 <code>data/events.json</code>。</li>
-          <li>靜態網頁無法在瀏覽器直接呼叫 Notion API（需整合金鑰），故以建置／同步時匯出為主；更新 Notion 後需重新匯出。</li>
+          <li>本分頁為內嵌靜態內容（<code>data/events-data.js</code>），不連線外部資料庫、亦不需同步步驟。</li>
           <li>事件日期以學校／教育局官網為準；標示「暫定（坊間）」者未經官方確認。時間顯示為香港時間（UTC+8）。</li>
-          <li id="events-notion-link-wrap"></li>
         </ul>
       </aside>
     </section>
@@ -105,7 +116,10 @@
   <template id="school-card-template">
     <article class="school-card">
       <header class="school-card-head">
-        <h3 class="school-name"></h3>
+        <div class="school-card-title-row">
+          <h3 class="school-name"></h3>
+          <span class="band-pill" title="民間參考組別，非官方評級"></span>
+        </div>
         <p class="school-name-en"></p>
         <div class="badges"></div>
       </header>
@@ -115,6 +129,8 @@
   </template>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/app.js" type="module"></script>
+  <script src="data/schools-data.js"></script>
+  <script src="data/events-data.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>

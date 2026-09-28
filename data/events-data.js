@@ -1,4 +1,4 @@
-{
+window.SHATIN_EVENTS = {
   "title": "沙田升中事件清單",
   "events": [
     {
@@ -147,4 +147,4 @@
       "sourceUrl": "https://www.edb.gov.hk/tc/edu-system/primary-secondary/spa-systems/secondary-spa/general-info/index.html"
     }
   ]
-}
+};
