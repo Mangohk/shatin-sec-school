@@ -485,13 +485,20 @@ class App {
   }
 
   userIcon() {
-    // Larger box than the rotated teardrop so the pin tip is not clipped;
-    // CSS clears Leaflet's default white DivIcon square on .user-marker.
+    // Omit leaflet-div-icon so Leaflet's default white square never applies.
+    // Inline SVG teardrop stays visible even if DivIcon chrome styles leak in.
+    const pinSvg =
+      `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 28 36" width="28" height="36" aria-hidden="true">` +
+      `<path fill="#b23b2d" stroke="#ffffff" stroke-width="2.5" stroke-linejoin="round" ` +
+      `d="M14 2.5c-5.8 0-10.5 4.7-10.5 10.5 0 7.4 10.5 20 10.5 20s10.5-12.6 10.5-20C24.5 7.2 19.8 2.5 14 2.5z"/>` +
+      `<circle cx="14" cy="12.5" r="3.6" fill="#ffffff"/>` +
+      `</svg>`;
     return L.divIcon({
-      className: "user-marker leaflet-div-icon",
-      html: `<span class="marker-pin" aria-hidden="true"></span>`,
+      className: "user-marker",
+      html: `<span class="marker-pin">${pinSvg}</span>`,
       iconSize: [28, 36],
-      iconAnchor: [14, 34],
+      iconAnchor: [14, 36],
+      popupAnchor: [0, -32],
     });
   }
 
