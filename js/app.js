@@ -70,10 +70,12 @@ class App {
     this.schools = [];
     this.eventsPayload = null;
     this.filterType = "all";
+    this.filterBand = "all";
     this.eventStatus = "all";
     this.query = "";
     this.map = null;
     this.markers = new Map();
+    this.markerMeta = new Map();
     this.markerLayer = null;
     this.userMarker = null;
     this.selectedLatLng = null;
@@ -88,6 +90,7 @@ class App {
       panelMap: document.getElementById("panel-map"),
       search: document.getElementById("search"),
       filters: document.querySelector(".filters"),
+      bandFilters: document.querySelector(".band-filters"),
       resultCount: document.getElementById("result-count"),
       schoolList: document.getElementById("school-list"),
       eventsList: document.getElementById("events-list"),
@@ -278,11 +281,30 @@ class App {
       });
       this.renderList();
     });
+
+    if (this.els.bandFilters) {
+      this.els.bandFilters.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-band]");
+        if (!btn) return;
+        this.filterBand = btn.dataset.band;
+        this.els.bandFilters.querySelectorAll(".chip").forEach((chip) => {
+          chip.classList.toggle("is-active", chip === btn);
+        });
+        this.renderList();
+      });
+    }
+  }
+
+  bandLabel(band) {
+    if (band === "1" || band === "2" || band === "3") return `Band ${band}`;
+    return "未知／不適用";
   }
 
   filteredSchools() {
     return this.schools.filter((s) => {
       if (this.filterType !== "all" && s.type !== this.filterType) return false;
+      const band = s.band || "未知";
+      if (this.filterBand !== "all" && band !== this.filterBand) return false;
       if (!this.query) return true;
       const hay = [
         s.nameZh,
@@ -293,6 +315,7 @@ class App {
         s.religion,
         s.gender,
         s.bandNote || "",
+        this.bandLabel(band),
         s.phone,
       ]
         .join(" ")
@@ -302,7 +325,10 @@ class App {
   }
 
   renderList() {
+    const bandOrder = { "1": 0, "2": 1, "3": 2, "未知": 3 };
     const list = this.filteredSchools().slice().sort((a, b) => {
+      const bi = (bandOrder[a.band] ?? 9) - (bandOrder[b.band] ?? 9);
+      if (bi !== 0) return bi;
       const ti = TYPE_ORDER.indexOf(a.type) - TYPE_ORDER.indexOf(b.type);
       if (ti !== 0) return ti;
       return a.nameZh.localeCompare(b.nameZh, "zh-Hant");
@@ -316,6 +342,11 @@ class App {
       const card = node.querySelector(".school-card");
       card.querySelector(".school-name").textContent = school.nameZh;
       card.querySelector(".school-name-en").textContent = school.nameEn;
+
+      const band = school.band || "未知";
+      const bandPill = card.querySelector(".band-pill");
+      bandPill.textContent = this.bandLabel(band);
+      bandPill.classList.add(`band-${band}`);
 
       const badges = card.querySelector(".badges");
       const typeBadge = document.createElement("span");
@@ -337,16 +368,9 @@ class App {
         badges.append(r);
       }
 
-      if (school.bandNote) {
-        const b = document.createElement("span");
-        b.className = "badge band";
-        b.title = "民間參考組別，非官方評級";
-        b.textContent = `民間參考 ${school.bandNote}`;
-        badges.append(b);
-      }
-
       const meta = card.querySelector(".school-meta");
       const rows = [
+        ["組別", `<strong title="民間參考組別，非官方評級">${escapeHtml(this.bandLabel(band))}</strong>`],
         ["地址", school.addressZh],
         ["電話", school.phone
           ? `<a href="tel:${normalizePhoneHref(school.phone)}">${escapeHtml(school.phone)}</a>`
@@ -402,12 +426,21 @@ class App {
     setTimeout(() => this.map.invalidateSize(), 50);
   }
 
-  schoolIcon(isNearest = false) {
+  schoolIcon(school, isNearest = false) {
+    const band = school.band || "未知";
+    const initials = escapeHtml(school.initials || school.nameZh.slice(0, 2));
+    const nearestClass = isNearest ? " is-nearest" : "";
+    let inner = `<span class="marker-initials">${initials}</span>`;
+    if (school.logoDomain) {
+      const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(school.logoDomain)}&sz=64`;
+      inner = `<img src="${escapeHtml(favicon)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-fallback="${initials}" />`;
+    }
     return L.divIcon({
       className: "school-marker",
-      html: `<span class="marker-dot${isNearest ? " is-nearest" : ""}"></span>`,
-      iconSize: [14, 14],
-      iconAnchor: [7, 7],
+      html: `<div class="marker-badge band-${band}${nearestClass}" aria-label="${escapeHtml(school.nameZh)}">${inner}</div>`,
+      iconSize: [34, 34],
+      iconAnchor: [17, 17],
+      tooltipAnchor: [0, -18],
     });
   }
 
@@ -420,26 +453,59 @@ class App {
     });
   }
 
+  wireMarkerLogoFallback(marker) {
+    const el = marker.getElement();
+    if (!el) return;
+    const img = el.querySelector("img[data-fallback]");
+    if (!img) return;
+    const applyFallback = () => {
+      const initials = img.getAttribute("data-fallback") || "?";
+      const span = document.createElement("span");
+      span.className = "marker-initials";
+      span.textContent = initials;
+      img.replaceWith(span);
+    };
+    if (img.complete && img.naturalWidth === 0) {
+      applyFallback();
+      return;
+    }
+    img.addEventListener("error", applyFallback, { once: true });
+  }
+
   addSchoolMarkers() {
     this.markerLayer.clearLayers();
     this.markers.clear();
+    this.markerMeta.clear();
     const bounds = [];
 
     for (const school of this.schools) {
       const marker = L.marker([school.lat, school.lng], {
-        icon: this.schoolIcon(false),
+        icon: this.schoolIcon(school, false),
         title: school.nameZh,
+        keyboard: true,
+        riseOnHover: true,
+      });
+      marker.bindTooltip(school.nameZh, {
+        direction: "top",
+        offset: [0, -12],
+        opacity: 0.95,
+        className: "school-tooltip",
+        sticky: false,
       });
       marker.bindPopup(
         `<p class="popup-title">${escapeHtml(school.nameZh)}</p>
-         <p class="popup-meta">${escapeHtml(school.type)} · ${escapeHtml(school.addressZh)}</p>`,
-        { maxWidth: 240 }
+         <p class="popup-meta">${escapeHtml(this.bandLabel(school.band || "未知"))} · ${escapeHtml(school.type)} · ${escapeHtml(school.addressZh)}</p>`,
+        { maxWidth: 260 }
       );
-      marker.on("click", () => {
-        // keep popup; do not treat as distance origin
+      // Touch: first tap shows name tooltip; second opens popup via Leaflet defaults
+      marker.on("click", (e) => {
+        L.DomEvent.stopPropagation(e);
+        marker.openTooltip();
       });
+      marker.on("add", () => this.wireMarkerLogoFallback(marker));
       marker.addTo(this.markerLayer);
       this.markers.set(school.id, marker);
+      this.markerMeta.set(school.id, school);
       bounds.push([school.lat, school.lng]);
     }
 
@@ -479,7 +545,11 @@ class App {
     this.els.selectedPoint.textContent = "尚未選點。請在地圖上點選參考位置。";
     this.els.distanceList.replaceChildren();
     for (const marker of this.markers.values()) {
-      marker.setIcon(this.schoolIcon(false));
+      // leave icons; refresh below in renderDistances when point set
+    }
+    for (const [id, marker] of this.markers) {
+      const school = this.markerMeta.get(id);
+      if (school) marker.setIcon(this.schoolIcon(school, false));
     }
   }
 
@@ -501,7 +571,7 @@ class App {
         <span class="distance-rank">${index + 1}</span>
         <span>
           <span class="distance-name">${escapeHtml(item.school.nameZh)}</span>
-          <span class="distance-meta">${escapeHtml(item.school.type)} · ${escapeHtml(item.school.addressZh)}</span>
+          <span class="distance-meta">${escapeHtml(this.bandLabel(item.school.band || "未知"))} · ${escapeHtml(item.school.type)} · ${escapeHtml(item.school.addressZh)}</span>
         </span>
         <span class="distance-value">${formatDistance(item.meters)}</span>
       `;
@@ -517,7 +587,11 @@ class App {
 
     const nearestId = ranked[0]?.school.id;
     for (const [id, marker] of this.markers) {
-      marker.setIcon(this.schoolIcon(id === nearestId));
+      const school = this.markerMeta.get(id);
+      if (school) {
+        marker.setIcon(this.schoolIcon(school, id === nearestId));
+        this.wireMarkerLogoFallback(marker);
+      }
     }
   }
 

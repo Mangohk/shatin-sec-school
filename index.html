@@ -34,12 +34,25 @@
           <span class="sr-only">搜尋學校</span>
           <input id="search" type="search" placeholder="搜尋校名、地址、類型…" autocomplete="off" />
         </label>
-        <div class="filters" role="group" aria-label="學校類型篩選">
-          <button class="chip is-active" data-type="all">全部</button>
-          <button class="chip" data-type="官立">官立</button>
-          <button class="chip" data-type="資助">資助</button>
-          <button class="chip" data-type="直資">直資</button>
-          <button class="chip" data-type="私立">私立</button>
+        <div class="filter-row">
+          <span class="filter-label">類型</span>
+          <div class="filters" role="group" aria-label="學校類型篩選">
+            <button class="chip is-active" data-type="all">全部</button>
+            <button class="chip" data-type="官立">官立</button>
+            <button class="chip" data-type="資助">資助</button>
+            <button class="chip" data-type="直資">直資</button>
+            <button class="chip" data-type="私立">私立</button>
+          </div>
+        </div>
+        <div class="filter-row">
+          <span class="filter-label">組別</span>
+          <div class="band-filters" role="group" aria-label="民間參考組別篩選">
+            <button class="chip is-active" data-band="all">全部</button>
+            <button class="chip" data-band="1">Band 1</button>
+            <button class="chip" data-band="2">Band 2</button>
+            <button class="chip" data-band="3">Band 3</button>
+            <button class="chip" data-band="未知">未知／不適用</button>
+          </div>
         </div>
         <p class="result-count" id="result-count"></p>
       </div>
@@ -105,7 +118,10 @@
   <template id="school-card-template">
     <article class="school-card">
       <header class="school-card-head">
-        <h3 class="school-name"></h3>
+        <div class="school-card-title-row">
+          <h3 class="school-name"></h3>
+          <span class="band-pill" title="民間參考組別，非官方評級"></span>
+        </div>
         <p class="school-name-en"></p>
         <div class="badges"></div>
       </header>
