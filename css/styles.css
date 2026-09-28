@@ -670,17 +670,17 @@ main {
 }
 
 .school-marker {
-  background: transparent;
-  border: 0;
+  background: transparent !important;
+  border: 0 !important;
 }
 
 .marker-badge {
   position: relative;
-  width: 34px;
-  height: 34px;
+  width: 36px;
+  height: 36px;
   border-radius: 50%;
-  border: 2px solid #fff;
-  box-shadow: 0 3px 10px rgba(20, 35, 31, 0.28);
+  border: 2.5px solid #fff;
+  box-shadow: 0 3px 10px rgba(20, 35, 31, 0.35), 0 0 0 1px rgba(20, 35, 31, 0.18);
   display: grid;
   place-items: center;
   overflow: hidden;
@@ -691,6 +691,7 @@ main {
   letter-spacing: -0.02em;
   line-height: 1;
   font-family: var(--font-sans);
+  pointer-events: auto;
 }
 
 .marker-badge.band-1 { background: #0f6b5c; }
@@ -703,17 +704,25 @@ main {
   transform: scale(1.08);
 }
 
-.marker-badge img {
+.marker-badge .marker-initials {
+  padding: 0 2px;
+  text-align: center;
+  z-index: 0;
+}
+
+.marker-badge .marker-logo {
+  position: absolute;
+  inset: 0;
   width: 100%;
   height: 100%;
   object-fit: cover;
   display: block;
   background: #fff;
+  z-index: 1;
 }
 
-.marker-badge .marker-initials {
-  padding: 0 2px;
-  text-align: center;
+.marker-badge .marker-logo[hidden] {
+  display: none !important;
 }
 
 .leaflet-tooltip.school-tooltip {
