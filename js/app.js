@@ -1,7 +1,7 @@
 const TYPE_ORDER = ["官立", "資助", "直資", "私立"];
 
 /** Haversine great-circle distance in metres */
-export function haversineMeters(lat1, lon1, lat2, lon2) {
+function haversineMeters(lat1, lon1, lat2, lon2) {
   const R = 6371000;
   const toRad = (d) => (d * Math.PI) / 180;
   const φ1 = toRad(lat1);
@@ -14,7 +14,7 @@ export function haversineMeters(lat1, lon1, lat2, lon2) {
   return 2 * R * Math.asin(Math.sqrt(a));
 }
 
-export function formatDistance(meters) {
+function formatDistance(meters) {
   if (meters < 1000) {
     return `${Math.round(meters)} 米`;
   }
@@ -97,7 +97,6 @@ class App {
       eventsTitle: document.getElementById("events-title"),
       eventsMeta: document.getElementById("events-meta"),
       eventsFilters: document.querySelector(".events-filters"),
-      eventsNotionLinkWrap: document.getElementById("events-notion-link-wrap"),
       map: document.getElementById("map"),
       mapHint: document.getElementById("map-hint"),
       selectedPoint: document.getElementById("selected-point"),
@@ -107,44 +106,38 @@ class App {
     };
   }
 
-  async init() {
+  init() {
     this.bindTabs();
     this.bindListControls();
     this.bindEventFilters();
     this.els.clearPoint.addEventListener("click", () => this.clearSelectedPoint());
 
-    try {
-      const res = await fetch("data/schools.json");
-      if (!res.ok) throw new Error(`無法載入學校資料（${res.status}）`);
-      this.schools = await res.json();
+    const schools = window.SHATIN_SCHOOLS;
+    if (!Array.isArray(schools) || !schools.length) {
+      this.els.schoolList.innerHTML =
+        `<p class="sources">載入失敗：找不到內嵌學校資料。請確認已載入 <code>data/schools-data.js</code>。</p>`;
+    } else {
+      this.schools = schools;
       this.renderList();
-    } catch (err) {
-      this.els.schoolList.innerHTML = `<p class="sources">載入失敗：${escapeHtml(err.message)}。請以本地伺服器開啟本站（見 README）。</p>`;
     }
 
     this.loadEvents();
   }
 
-  async loadEvents() {
-    try {
-      const res = await fetch("data/events.json");
-      if (!res.ok) throw new Error(`無法載入升中項目（${res.status}）`);
-      this.eventsPayload = await res.json();
-      if (this.els.eventsTitle && this.eventsPayload.title) {
-        this.els.eventsTitle.textContent = this.eventsPayload.title;
-      }
-      const synced = this.eventsPayload.source?.syncedAt
-        ? new Date(this.eventsPayload.source.syncedAt).toLocaleString("zh-HK", { timeZone: "Asia/Hong_Kong" })
-        : "—";
-      this.els.eventsMeta.textContent = `Notion 同步快照 · 共 ${this.eventsPayload.events?.length || 0} 項 · 同步於 ${synced}`;
-      if (this.els.eventsNotionLinkWrap && this.eventsPayload.source?.notionUrl) {
-        this.els.eventsNotionLinkWrap.innerHTML = `原始 Notion：<a href="${escapeHtml(this.eventsPayload.source.notionUrl)}" target="_blank" rel="noopener noreferrer">開啟資料庫</a>`;
-      }
-      this.renderEvents();
-    } catch (err) {
+  loadEvents() {
+    const payload = window.SHATIN_EVENTS;
+    if (!payload?.events) {
       this.els.eventsMeta.textContent = "載入失敗";
-      this.els.eventsList.innerHTML = `<p class="sources">無法載入升中項目：${escapeHtml(err.message)}</p>`;
+      this.els.eventsList.innerHTML =
+        `<p class="sources">找不到內嵌升中項目。請確認已載入 <code>data/events-data.js</code>。</p>`;
+      return;
     }
+    this.eventsPayload = payload;
+    if (this.els.eventsTitle && payload.title) {
+      this.els.eventsTitle.textContent = payload.title;
+    }
+    this.els.eventsMeta.textContent = `靜態內容 · 共 ${payload.events.length} 項（請以學校／教育局官網核實）`;
+    this.renderEvents();
   }
 
   bindTabs() {
@@ -248,16 +241,9 @@ class App {
         body.append(notes);
       }
 
-      const links = document.createElement("p");
-      const parts = [];
       if (ev.sourceUrl) {
-        parts.push(`<a href="${escapeHtml(ensureUrl(ev.sourceUrl))}" target="_blank" rel="noopener noreferrer">來源</a>`);
-      }
-      if (ev.notionUrl) {
-        parts.push(`<a href="${escapeHtml(ev.notionUrl)}" target="_blank" rel="noopener noreferrer">Notion</a>`);
-      }
-      if (parts.length) {
-        links.innerHTML = parts.join(" · ");
+        const links = document.createElement("p");
+        links.innerHTML = `<a href="${escapeHtml(ensureUrl(ev.sourceUrl))}" target="_blank" rel="noopener noreferrer">來源</a>`;
         body.append(links);
       }
 

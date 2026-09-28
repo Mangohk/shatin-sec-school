@@ -83,12 +83,10 @@
       </div>
       <div id="events-list" class="events-list"></div>
       <aside class="sources">
-        <h2>Notion 同步說明</h2>
+        <h2>升中項目說明</h2>
         <ul>
-          <li>內容來自 Notion 資料庫「沙田升中事件清單」（升中相關項目），經 MCP 匯出為本機快照 <code>data/events.json</code>。</li>
-          <li>靜態網頁無法在瀏覽器直接呼叫 Notion API（需整合金鑰），故以建置／同步時匯出為主；更新 Notion 後需重新匯出。</li>
+          <li>本分頁為內嵌靜態內容（<code>data/events-data.js</code>），不連線外部資料庫、亦不需同步步驟。</li>
           <li>事件日期以學校／教育局官網為準；標示「暫定（坊間）」者未經官方確認。時間顯示為香港時間（UTC+8）。</li>
-          <li id="events-notion-link-wrap"></li>
         </ul>
       </aside>
     </section>
@@ -131,6 +129,8 @@
   </template>
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
-  <script src="js/app.js" type="module"></script>
+  <script src="data/schools-data.js"></script>
+  <script src="data/events-data.js"></script>
+  <script src="js/app.js"></script>
 </body>
 </html>
