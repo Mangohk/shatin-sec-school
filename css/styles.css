@@ -756,14 +756,25 @@ main {
   transform: scale(1.15);
 }
 
+/* Reset Leaflet's default DivIcon chrome (white bg + border square). */
+.user-marker.leaflet-div-icon,
+.user-marker {
+  background: transparent !important;
+  border: 0 !important;
+  box-shadow: none !important;
+  overflow: visible !important;
+}
+
 .user-marker .marker-pin {
-  width: 18px;
-  height: 18px;
+  display: block;
+  width: 22px;
+  height: 22px;
+  margin: 2px auto 0;
   border-radius: 50% 50% 50% 0;
   background: #b23b2d;
   transform: rotate(-45deg);
-  border: 2px solid #fff;
-  box-shadow: 0 4px 12px rgba(178, 59, 45, 0.4);
+  border: 2.5px solid #fff;
+  box-shadow: 0 4px 12px rgba(178, 59, 45, 0.45);
 }
 
 .popup-title {

@@ -485,11 +485,13 @@ class App {
   }
 
   userIcon() {
+    // Larger box than the rotated teardrop so the pin tip is not clipped;
+    // CSS clears Leaflet's default white DivIcon square on .user-marker.
     return L.divIcon({
       className: "user-marker leaflet-div-icon",
-      html: `<span class="marker-pin"></span>`,
-      iconSize: [18, 18],
-      iconAnchor: [9, 16],
+      html: `<span class="marker-pin" aria-hidden="true"></span>`,
+      iconSize: [28, 36],
+      iconAnchor: [14, 34],
     });
   }
 
