@@ -161,6 +161,8 @@ class App {
         tabs[key].setAttribute("aria-selected", String(on));
       }
       if (name === "map") {
+        // Wait until the tab panel is laid out (display:none → visible).
+        // One rAF is not always enough; ensureMap retries until size > 0.
         requestAnimationFrame(() => this.ensureMap());
       }
     };
@@ -168,6 +170,12 @@ class App {
     this.els.tabList.addEventListener("click", () => activate("list"));
     this.els.tabEvents.addEventListener("click", () => activate("events"));
     this.els.tabMap.addEventListener("click", () => activate("map"));
+  }
+
+  mapContainerSize() {
+    const el = this.els.map;
+    if (!el) return { w: 0, h: 0 };
+    return { w: el.clientWidth || 0, h: el.clientHeight || 0 };
   }
 
   bindEventFilters() {
@@ -383,13 +391,28 @@ class App {
 
   ensureMap() {
     if (this.mapReady) {
-      this.map.invalidateSize();
+      this.refreshMapLayout({ refit: false });
       return;
     }
     if (typeof L === "undefined") {
       this.els.selectedPoint.textContent = "地圖程式庫載入失敗，請檢查網路連線後重新整理。";
       return;
     }
+
+    // Never create the map while the tab is display:none / size 0 — Leaflet
+    // then places markers at bogus pixel positions that invalidateSize alone
+    // does not fix (tiles may still appear after a later invalidateSize).
+    const { w, h } = this.mapContainerSize();
+    if (w < 32 || h < 32) {
+      if (!this._mapInitRetries) this._mapInitRetries = 0;
+      if (this._mapInitRetries++ < 40) {
+        requestAnimationFrame(() => this.ensureMap());
+      } else {
+        this.els.selectedPoint.textContent = "地圖容器尚未就緒，請再按一次「地圖與距離」。";
+      }
+      return;
+    }
+    this._mapInitRetries = 0;
 
     this.map = L.map(this.els.map, {
       zoomControl: true,
@@ -409,53 +432,91 @@ class App {
     });
 
     this.mapReady = true;
-    setTimeout(() => this.map.invalidateSize(), 50);
+    this.map.invalidateSize({ animate: false });
+    // After tab fade-in, only invalidateSize — do not re-fitBounds (would undo
+    // deep-links / 「在地圖查看」 zoom).
+    setTimeout(() => {
+      if (this.map) this.map.invalidateSize({ animate: false });
+    }, 80);
+    setTimeout(() => {
+      if (this.map) this.map.invalidateSize({ animate: false });
+    }, 320);
+
+    if (typeof ResizeObserver !== "undefined" && !this._mapResizeObserver) {
+      this._mapResizeObserver = new ResizeObserver(() => {
+        if (this.mapReady) this.map.invalidateSize({ animate: false });
+      });
+      this._mapResizeObserver.observe(this.els.map);
+    }
+  }
+
+  refreshMapLayout({ refit = false } = {}) {
+    if (!this.map) return;
+    this.map.invalidateSize({ animate: false });
+    if (refit && this.markers.size) {
+      const bounds = [];
+      for (const marker of this.markers.values()) {
+        bounds.push(marker.getLatLng());
+      }
+      if (bounds.length) {
+        this.map.fitBounds(bounds, { padding: [28, 28], animate: false });
+      }
+    }
   }
 
   schoolIcon(school, isNearest = false) {
     const band = school.band || "未知";
     const initials = escapeHtml(school.initials || school.nameZh.slice(0, 2));
     const nearestClass = isNearest ? " is-nearest" : "";
-    let inner = `<span class="marker-initials">${initials}</span>`;
+    // Always paint a coloured initials badge first so markers stay visible
+    // even when favicons are blocked, slow, or blank. Logo is optional overlay.
+    let logo = "";
     if (school.logoDomain) {
       const favicon = `https://www.google.com/s2/favicons?domain=${encodeURIComponent(school.logoDomain)}&sz=64`;
-      inner = `<img src="${escapeHtml(favicon)}" alt="" loading="lazy" referrerpolicy="no-referrer" data-fallback="${initials}" />`;
+      logo = `<img class="marker-logo" src="${escapeHtml(favicon)}" alt="" decoding="async" referrerpolicy="no-referrer" hidden />`;
     }
     return L.divIcon({
-      className: "school-marker",
-      html: `<div class="marker-badge band-${band}${nearestClass}" aria-label="${escapeHtml(school.nameZh)}">${inner}</div>`,
-      iconSize: [34, 34],
-      iconAnchor: [17, 17],
+      className: "school-marker leaflet-div-icon",
+      html: `<div class="marker-badge band-${band}${nearestClass}" aria-label="${escapeHtml(school.nameZh)}"><span class="marker-initials">${initials}</span>${logo}</div>`,
+      iconSize: [36, 36],
+      iconAnchor: [18, 18],
       tooltipAnchor: [0, -18],
     });
   }
 
   userIcon() {
     return L.divIcon({
-      className: "user-marker",
+      className: "user-marker leaflet-div-icon",
       html: `<span class="marker-pin"></span>`,
       iconSize: [18, 18],
       iconAnchor: [9, 16],
     });
   }
 
-  wireMarkerLogoFallback(marker) {
+  wireMarkerLogo(marker) {
     const el = marker.getElement();
     if (!el) return;
-    const img = el.querySelector("img[data-fallback]");
+    const img = el.querySelector("img.marker-logo");
     if (!img) return;
-    const applyFallback = () => {
-      const initials = img.getAttribute("data-fallback") || "?";
-      const span = document.createElement("span");
-      span.className = "marker-initials";
-      span.textContent = initials;
-      img.replaceWith(span);
+    const showLogo = () => {
+      // Tiny / broken placeholders stay hidden so initials remain visible.
+      if (!img.naturalWidth || img.naturalWidth < 12) {
+        img.remove();
+        return;
+      }
+      img.hidden = false;
+      el.querySelector(".marker-badge")?.classList.add("has-logo");
     };
-    if (img.complete && img.naturalWidth === 0) {
-      applyFallback();
+    const dropLogo = () => {
+      img.remove();
+    };
+    if (img.complete) {
+      if (img.naturalWidth === 0) dropLogo();
+      else showLogo();
       return;
     }
-    img.addEventListener("error", applyFallback, { once: true });
+    img.addEventListener("load", showLogo, { once: true });
+    img.addEventListener("error", dropLogo, { once: true });
   }
 
   addSchoolMarkers() {
@@ -488,7 +549,7 @@ class App {
         L.DomEvent.stopPropagation(e);
         marker.openTooltip();
       });
-      marker.on("add", () => this.wireMarkerLogoFallback(marker));
+      marker.on("add", () => this.wireMarkerLogo(marker));
       marker.addTo(this.markerLayer);
       this.markers.set(school.id, marker);
       this.markerMeta.set(school.id, school);
@@ -496,7 +557,7 @@ class App {
     }
 
     if (bounds.length) {
-      this.map.fitBounds(bounds, { padding: [28, 28] });
+      this.map.fitBounds(bounds, { padding: [28, 28], animate: false });
     }
   }
 
@@ -535,7 +596,10 @@ class App {
     }
     for (const [id, marker] of this.markers) {
       const school = this.markerMeta.get(id);
-      if (school) marker.setIcon(this.schoolIcon(school, false));
+      if (school) {
+        marker.setIcon(this.schoolIcon(school, false));
+        this.wireMarkerLogo(marker);
+      }
     }
   }
 
@@ -576,19 +640,33 @@ class App {
       const school = this.markerMeta.get(id);
       if (school) {
         marker.setIcon(this.schoolIcon(school, id === nearestId));
-        this.wireMarkerLogoFallback(marker);
+        this.wireMarkerLogo(marker);
       }
     }
   }
 
   showSchoolOnMap(schoolId) {
-    this.els.tabMap.click();
     const school = this.schools.find((s) => s.id === schoolId);
     if (!school) return;
+
+    // Activate tab first; ensureMap waits for non-zero container size.
+    this.els.tabMap.click();
     this.ensureMap();
-    const marker = this.markers.get(schoolId);
-    this.map.setView([school.lat, school.lng], 16, { animate: true });
-    if (marker) marker.openPopup();
+
+    const open = () => {
+      if (!this.mapReady) {
+        requestAnimationFrame(open);
+        return;
+      }
+      this.refreshMapLayout({ refit: false });
+      const marker = this.markers.get(schoolId);
+      this.map.setView([school.lat, school.lng], 16, { animate: true });
+      if (marker) {
+        this.wireMarkerLogo(marker);
+        marker.openPopup();
+      }
+    };
+    open();
   }
 }
 
