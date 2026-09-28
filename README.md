@@ -18,6 +18,9 @@ npx --yes serve -l 8080
 
 > 請勿直接用 `file://` 開啟：瀏覽器會阻擋對 `data/schools.json` 的 fetch。
 
+## Site
+https://mangohk.github.io/shatin-sec-school/
+
 ## 功能
 
 1. **學校資料**：45 所沙田區中學（教育局／中學概覽公開名單），含中文校名、類型、地址、電話、網址；並附民間參考組別（附免責聲明）。
