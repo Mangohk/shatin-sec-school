@@ -18,10 +18,11 @@
     <div class="brand-block">
       <p class="brand-kicker">香港新界 · Sha Tin</p>
       <h1 class="brand">沙田區中學</h1>
-      <p class="brand-sub">學校資料 · 地圖位置 · 距離查詢</p>
+      <p class="brand-sub">學校資料 · 升中項目 · 地圖距離</p>
     </div>
     <nav class="tabs" role="tablist" aria-label="主要分頁">
       <button class="tab is-active" role="tab" id="tab-list" aria-selected="true" aria-controls="panel-list" data-tab="list">學校資料</button>
+      <button class="tab" role="tab" id="tab-events" aria-selected="false" aria-controls="panel-events" data-tab="events">升中項目</button>
       <button class="tab" role="tab" id="tab-map" aria-selected="false" aria-controls="panel-map" data-tab="map">地圖與距離</button>
     </nav>
   </header>
@@ -50,6 +51,31 @@
           <li>「民間參考組別」僅供參考，並非官方評級；收生組別每年不同，請自行向學校／教育局核實。</li>
           <li>地圖座標取自 OpenStreetMap／Photon 公開地理資料，精確至社區／鄰里層級，可能與校門實際位置略有偏差。</li>
           <li>地圖使用 Leaflet + OpenStreetMap 圖磚，無需付費 API 金鑰。</li>
+        </ul>
+      </aside>
+    </section>
+
+    <section id="panel-events" class="panel" role="tabpanel" aria-labelledby="tab-events" hidden>
+      <div class="events-intro">
+        <div>
+          <h2 class="events-title" id="events-title">沙田升中事件清單</h2>
+          <p class="events-meta" id="events-meta">載入中…</p>
+        </div>
+        <div class="events-filters" role="group" aria-label="狀態篩選">
+          <button class="chip is-active" data-event-status="all">全部</button>
+          <button class="chip" data-event-status="官方確認">官方確認</button>
+          <button class="chip" data-event-status="暫定（坊間）">暫定（坊間）</button>
+          <button class="chip" data-event-status="已過">已過</button>
+        </div>
+      </div>
+      <div id="events-list" class="events-list"></div>
+      <aside class="sources">
+        <h2>Notion 同步說明</h2>
+        <ul>
+          <li>內容來自 Notion 資料庫「沙田升中事件清單」（升中相關項目），經 MCP 匯出為本機快照 <code>data/events.json</code>。</li>
+          <li>靜態網頁無法在瀏覽器直接呼叫 Notion API（需整合金鑰），故以建置／同步時匯出為主；更新 Notion 後需重新匯出。</li>
+          <li>事件日期以學校／教育局官網為準；標示「暫定（坊間）」者未經官方確認。時間顯示為香港時間（UTC+8）。</li>
+          <li id="events-notion-link-wrap"></li>
         </ul>
       </aside>
     </section>
