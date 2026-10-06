@@ -1,5 +1,24 @@
 {
   "title": "沙田升中事件清單",
+  "timezone": "Asia/Hong_Kong",
+  "schema": {
+    "description": "升中項目的唯一資料來源。頁面以 fetch() 讀取本檔；請勿再維護 events-data.js。",
+    "event": {
+      "id": "字串，唯一識別（例如 ev-10）",
+      "title": "顯示標題",
+      "type": "類型標籤：開放日｜資訊日｜報名／申請｜放榜／結果｜註冊（可自訂，會顯示為徽章）",
+      "status": "官方確認｜暫定（坊間）｜已過（須與分頁篩選按鈕完全一致）",
+      "schools": "校名陣列；全港／教育局項目可用空陣列 []",
+      "isDateTime": "true：dateStart／dateEnd 為 ISO 8601 UTC（結尾 Z），頁面轉香港時間顯示。false：僅日期，格式 YYYY-MM-DD，以香港日曆日解讀。",
+      "dateStart": "必填。時段開始（ISO UTC）或日期（YYYY-MM-DD）",
+      "dateEnd": "可選／null。同日或同場結束；全日活動可省略",
+      "keyDateStart": "可選／null。關鍵節點（截止、派票開始等），格式規則同 isDateTime 對應的 keyDateIsDateTime",
+      "keyDateIsDateTime": "keyDateStart 是否含時刻",
+      "keyPoints": "可選短註，顯示於日期欄「關鍵：…」",
+      "notes": "說明／場地／預約等",
+      "sourceUrl": "來源網址"
+    }
+  },
   "events": [
     {
       "id": "ev-01",
