@@ -85,7 +85,7 @@
       <aside class="sources">
         <h2>升中項目說明</h2>
         <ul>
-          <li>本分頁為內嵌靜態內容（<code>data/events-data.js</code>），不連線外部資料庫、亦不需同步步驟。</li>
+          <li>本分頁於執行時讀取 <code>data/events.json</code>（單一資料來源）。請以 GitHub Pages 或本機 HTTP 開啟；直接雙擊 <code>index.html</code> 時瀏覽器通常無法 fetch 本地 JSON。</li>
           <li>事件日期以學校／教育局官網為準；標示「暫定（坊間）」者未經官方確認。時間顯示為香港時間（UTC+8）。</li>
         </ul>
       </aside>
@@ -130,7 +130,6 @@
 
   <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
   <script src="data/schools-data.js"></script>
-  <script src="data/events-data.js"></script>
   <script src="js/app.js"></script>
 </body>
 </html>

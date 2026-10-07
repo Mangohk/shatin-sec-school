@@ -124,20 +124,37 @@ class App {
     this.loadEvents();
   }
 
-  loadEvents() {
-    const payload = window.SHATIN_EVENTS;
-    if (!payload?.events) {
-      this.els.eventsMeta.textContent = "載入失敗";
-      this.els.eventsList.innerHTML =
-        `<p class="sources">找不到內嵌升中項目。請確認已載入 <code>data/events-data.js</code>。</p>`;
-      return;
+  eventsJsonUrl() {
+    return new URL("data/events.json", window.location.href).href;
+  }
+
+  showEventsLoadError() {
+    this.eventsPayload = null;
+    this.els.eventsMeta.textContent = "載入失敗";
+    this.els.eventsList.innerHTML =
+      `<p class="events-error" role="alert">無法載入升中項目（<code>data/events.json</code>）。請用 HTTP 開啟本站（GitHub Pages 或本機靜態伺服器）；直接雙擊 <code>index.html</code> 時，瀏覽器在 file:// 下通常無法讀取本地 JSON。</p>`;
+  }
+
+  async loadEvents() {
+    try {
+      const response = await fetch(this.eventsJsonUrl(), { cache: "no-store" });
+      if (!response.ok) {
+        throw new Error(`HTTP ${response.status}`);
+      }
+      const payload = await response.json();
+      if (!payload || !Array.isArray(payload.events)) {
+        throw new Error("invalid events payload");
+      }
+      this.eventsPayload = payload;
+      if (this.els.eventsTitle && payload.title) {
+        this.els.eventsTitle.textContent = payload.title;
+      }
+      this.els.eventsMeta.textContent =
+        `data/events.json · 共 ${payload.events.length} 項（請以學校／教育局官網核實）`;
+      this.renderEvents();
+    } catch (err) {
+      this.showEventsLoadError();
     }
-    this.eventsPayload = payload;
-    if (this.els.eventsTitle && payload.title) {
-      this.els.eventsTitle.textContent = payload.title;
-    }
-    this.els.eventsMeta.textContent = `靜態內容 · 共 ${payload.events.length} 項（請以學校／教育局官網核實）`;
-    this.renderEvents();
   }
 
   bindTabs() {
