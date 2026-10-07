@@ -574,10 +574,40 @@ main {
   font-size: 0.9rem;
 }
 
-.events-filters {
+.events-filter-stack {
+  display: grid;
+  gap: 0.65rem;
+}
+
+.events-filters,
+.events-band-filters {
   display: flex;
   flex-wrap: wrap;
   gap: 0.45rem;
+}
+
+.events-school-filter {
+  flex: 1 1 12rem;
+  min-width: 0;
+}
+
+.events-school-filter select {
+  width: 100%;
+  max-width: 28rem;
+  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.72);
+  border-radius: 12px;
+  padding: 0.5rem 0.75rem;
+  font: inherit;
+  font-size: 0.9rem;
+  color: var(--ink);
+  box-shadow: var(--shadow);
+}
+
+.events-school-filter select:focus {
+  outline: 2px solid var(--teal);
+  outline-offset: 1px;
+  background: #fff;
 }
 
 .events-list {
