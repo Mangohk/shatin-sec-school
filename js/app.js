@@ -72,6 +72,9 @@ class App {
     this.filterType = "all";
     this.filterBand = "all";
     this.eventStatus = "all";
+    this.eventBand = "all";
+    this.eventSchool = "all";
+    this.schoolBandByName = new Map();
     this.query = "";
     this.map = null;
     this.markers = new Map();
@@ -97,6 +100,8 @@ class App {
       eventsTitle: document.getElementById("events-title"),
       eventsMeta: document.getElementById("events-meta"),
       eventsFilters: document.querySelector(".events-filters"),
+      eventsBandFilters: document.querySelector(".events-band-filters"),
+      eventsSchoolSelect: document.getElementById("events-school-select"),
       map: document.getElementById("map"),
       mapHint: document.getElementById("map-hint"),
       selectedPoint: document.getElementById("selected-point"),
@@ -118,6 +123,9 @@ class App {
         `<p class="sources">載入失敗：找不到內嵌學校資料。請確認已載入 <code>data/schools-data.js</code>。</p>`;
     } else {
       this.schools = schools;
+      this.schoolBandByName = new Map(
+        schools.map((s) => [s.nameZh, s.band || "未知"])
+      );
       this.renderList();
     }
 
@@ -151,10 +159,52 @@ class App {
       }
       this.els.eventsMeta.textContent =
         `data/events.json · 共 ${payload.events.length} 項（請以學校／教育局官網核實）`;
+      this.populateEventSchoolFilter();
       this.renderEvents();
     } catch (err) {
       this.showEventsLoadError();
     }
+  }
+
+  /** Unique school names from loaded events, plus 全部 / 全區／教育局. */
+  populateEventSchoolFilter() {
+    const select = this.els.eventsSchoolSelect;
+    if (!select || !this.eventsPayload?.events) return;
+
+    const names = new Set();
+    for (const ev of this.eventsPayload.events) {
+      for (const school of ev.schools || []) {
+        if (school) names.add(school);
+      }
+    }
+    const sorted = [...names].sort((a, b) => a.localeCompare(b, "zh-Hant"));
+
+    const previous = this.eventSchool;
+    select.replaceChildren();
+
+    const allOpt = document.createElement("option");
+    allOpt.value = "all";
+    allOpt.textContent = "全部";
+    select.append(allOpt);
+
+    const districtOpt = document.createElement("option");
+    districtOpt.value = "__district__";
+    districtOpt.textContent = "全區／教育局";
+    select.append(districtOpt);
+
+    for (const name of sorted) {
+      const opt = document.createElement("option");
+      opt.value = name;
+      opt.textContent = name;
+      select.append(opt);
+    }
+
+    const stillValid =
+      previous === "all" ||
+      previous === "__district__" ||
+      names.has(previous);
+    this.eventSchool = stillValid ? previous : "all";
+    select.value = this.eventSchool;
   }
 
   bindTabs() {
@@ -196,23 +246,64 @@ class App {
   }
 
   bindEventFilters() {
-    if (!this.els.eventsFilters) return;
-    this.els.eventsFilters.addEventListener("click", (e) => {
-      const btn = e.target.closest("[data-event-status]");
-      if (!btn) return;
-      this.eventStatus = btn.dataset.eventStatus;
-      this.els.eventsFilters.querySelectorAll(".chip").forEach((chip) => {
-        chip.classList.toggle("is-active", chip === btn);
+    if (this.els.eventsFilters) {
+      this.els.eventsFilters.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-event-status]");
+        if (!btn) return;
+        this.eventStatus = btn.dataset.eventStatus;
+        this.els.eventsFilters.querySelectorAll(".chip").forEach((chip) => {
+          chip.classList.toggle("is-active", chip === btn);
+        });
+        this.renderEvents();
       });
-      this.renderEvents();
+    }
+    if (this.els.eventsBandFilters) {
+      this.els.eventsBandFilters.addEventListener("click", (e) => {
+        const btn = e.target.closest("[data-event-band]");
+        if (!btn) return;
+        this.eventBand = btn.dataset.eventBand;
+        this.els.eventsBandFilters.querySelectorAll(".chip").forEach((chip) => {
+          chip.classList.toggle("is-active", chip === btn);
+        });
+        this.renderEvents();
+      });
+    }
+    if (this.els.eventsSchoolSelect) {
+      this.els.eventsSchoolSelect.addEventListener("change", () => {
+        this.eventSchool = this.els.eventsSchoolSelect.value || "all";
+        this.renderEvents();
+      });
+    }
+  }
+
+  eventMatchesSchoolFilter(ev) {
+    if (this.eventSchool === "all") return true;
+    const schools = Array.isArray(ev.schools) ? ev.schools : [];
+    if (this.eventSchool === "__district__") {
+      return schools.length === 0;
+    }
+    return schools.includes(this.eventSchool);
+  }
+
+  /** Band from school list; unknown names count as 未知. Empty schools → no band. */
+  eventMatchesBandFilter(ev) {
+    if (this.eventBand === "all") return true;
+    const schools = Array.isArray(ev.schools) ? ev.schools : [];
+    if (!schools.length) return false;
+    return schools.some((name) => {
+      const band = this.schoolBandByName.get(name) || "未知";
+      return band === this.eventBand;
     });
   }
 
   renderEvents() {
     if (!this.eventsPayload?.events) return;
     const list = this.eventsPayload.events.filter((ev) => {
-      if (this.eventStatus === "all") return true;
-      return ev.status === this.eventStatus;
+      if (this.eventStatus !== "all" && ev.status !== this.eventStatus) {
+        return false;
+      }
+      if (!this.eventMatchesBandFilter(ev)) return false;
+      return this.eventMatchesSchoolFilter(ev);
     });
 
     this.els.eventsList.replaceChildren();
