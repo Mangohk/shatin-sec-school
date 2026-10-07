@@ -29,7 +29,9 @@ https://mangohk.github.io/shatin-sec-school/
 
 ## 如何新增／修改升中項目
 
-只改 **`data/events.json`**（單一資料來源）。根物件含 `title`、`timezone`（`Asia/Hong_Kong`）、`schema`（欄位說明）與 `events` 陣列。在 `events` 加一筆或改現有欄位後，重新整理頁面即可。
+只改 **`data/events.json`**（單一資料來源）。根物件含 `title`、`timezone`（`Asia/Hong_Kong`）、可選 `syncedAt`／`source`（上次從 Notion 手動匯出的時間與資料庫連結）、`schema`（欄位說明）與 `events` 陣列。在 `events` 加一筆或改現有欄位後，重新整理頁面即可。
+
+內容可自 Notion「沙田升中事件清單」手動覆寫本檔；**站內不連線 Notion API**，亦無自動同步。
 
 | 欄位 | 說明 |
 | --- | --- |
